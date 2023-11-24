@@ -1,0 +1,3 @@
+[submodule "src/image_annotator"]
+	path = src/image_annotator
+	url = https://github.com/egeKeyvan/image_annotator
