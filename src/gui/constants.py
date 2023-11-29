@@ -1,1 +1,1 @@
-SCALE = 300
+SCALE = 800

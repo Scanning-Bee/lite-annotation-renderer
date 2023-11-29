@@ -4,89 +4,107 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import *
 
 import os
-import cv2
 
 from annotation_handler import AnnotationHandler
 
 
 class RendererWindow(QtWidgets.QMainWindow):
-    active_image_path: str = None
+    _chosen_folder_path: str = None
 
-    active_metadata_path: str = None
+    _annotated_image_paths: list[str] = []
 
-    chosen_image_pixmap: QPixmap = None
+    _shown_image_index: int = -1
 
-    annotated_image_pixmap: QPixmap = None
+    _annotation_handler: AnnotationHandler = None
 
-    annotated_image_path: str = None
+    _rendering_in_progress: bool = False
 
-    annotation_handler: AnnotationHandler = None
+    _error_text: str = None
 
     def __init__(self):
         super().__init__()
         self.setGeometry(200, 150, 900, 600)
         self.render_ui()
 
+    def navigate_images(self, direction: int):
+        if self._shown_image_index + direction < 0 or self._shown_image_index + direction >= len(self._annotated_image_paths):
+            return
+
+        self._shown_image_index += direction
+
+        self.render_ui()
+
     def render_ui(self):
-        self.setWindowTitle("Annotated Circle Renderer")
+        self.setWindowTitle("Annotation Renderer")
 
-        choose_image_button = QtWidgets.QPushButton("Choose an image")
-        choose_metadata_button = QtWidgets.QPushButton("Choose a metadata file")
+        choose_folder_button = QtWidgets.QPushButton("Choose a folder")
+        choose_folder_button.clicked.connect(self.folder_dialog)
 
-        render_image_button = QtWidgets.QPushButton("Render the annotated image")
-        reset_files_button = QtWidgets.QPushButton("Reset the files")
-
-        choose_image_button.clicked.connect(self.open_image_dialog)
-        choose_metadata_button.clicked.connect(self.open_metadata_dialog)
-        render_image_button.clicked.connect(self.render_annotations)
-        reset_files_button.clicked.connect(self.reset_files)
+        choose_another_folder_button = QtWidgets.QPushButton("Choose another folder")
+        choose_another_folder_button.clicked.connect(self.folder_dialog)
 
         panel_layout = QtWidgets.QVBoxLayout()
         panel_layout.addStretch()
 
-        if self.chosen_image_pixmap is not None:
-            label = QtWidgets.QLabel(self)
+        if self._chosen_folder_path is None:
+            panel_layout.addWidget(choose_folder_button)
 
-            scaled_pixmap = create_scaled_pixmap(self.chosen_image_pixmap)
-            label.setPixmap(scaled_pixmap)
+            if self._error_text is not None:
+                error_text = QtWidgets.QLabel(self)
+                error_text.setText(self._error_text)
+                error_text.setStyleSheet("color: darkred;")
 
-            panel_layout.addWidget(label)
-
-            panel_layout.addStretch()
-
-        if self.annotated_image_pixmap is None:
-            if self.active_image_path is None:
-                panel_layout.addWidget(choose_image_button)
-            else:
-                image_path_text = QtWidgets.QLabel(self)
-                image_path_text.setText(f"Chosen Image Path: {self.active_image_path}")
-                panel_layout.addWidget(image_path_text)
-
-            if self.active_metadata_path is None:
-                panel_layout.addWidget(choose_metadata_button)
-            else:
-                metadata_path_text = QtWidgets.QLabel(self)
-                metadata_path_text.setText(f"Chosen Metadata Path: {self.active_metadata_path}")
-                panel_layout.addWidget(metadata_path_text)
+                panel_layout.addWidget(error_text)
 
         else:
-            label = QtWidgets.QLabel(self)
+            if self._error_text is not None:
+                error_text = QtWidgets.QLabel(self)
+                error_text.setText(self._error_text)
+                error_text.setStyleSheet("color: darkred;")
 
-            scaled_pixmap = create_scaled_pixmap(self.annotated_image_pixmap)
+                panel_layout.addWidget(error_text)
+            elif self._rendering_in_progress:
+                panel_layout.addWidget(QtWidgets.QLabel("Rendering in progress..."))
+            else:
+                if self._annotated_image_paths == []:
+                    panel_layout.addWidget(QtWidgets.QLabel("No images found in the chosen folder"))
 
-            label.setPixmap(scaled_pixmap)
+                else:
+                    if self._shown_image_index == -1:
+                        panel_layout.addWidget(QtWidgets.QLabel("No images found in the chosen folder"))
+                    else:
+                        image = self._annotated_image_paths[self._shown_image_index]
 
-            annotated_image_path_text = QtWidgets.QLabel(self)
-            annotated_image_path_text.setText(f"Rendered Image Path: {self.annotated_image_path}")
+                        unscaled_pixmap = QPixmap(image)
 
-            panel_layout.addWidget(label)
-            panel_layout.addWidget(annotated_image_path_text)
+                        image_label = QtWidgets.QLabel(self)
 
-        if self.active_image_path is not None and self.active_metadata_path is not None:
-            if self.annotated_image_path is None:
-                panel_layout.addWidget(render_image_button)
+                        image_label.setPixmap(create_scaled_pixmap(unscaled_pixmap))
 
-            panel_layout.addWidget(reset_files_button)
+                        panel_layout.addWidget(image_label)
+                        panel_layout.addWidget(QtWidgets.QLabel(f"Image {self._shown_image_index + 1} of {len(self._annotated_image_paths)}"))
+                        panel_layout.addWidget(QtWidgets.QLabel(f"Image path: {image}"))
+
+                        navigation_layout = QtWidgets.QHBoxLayout()
+
+                        if self._shown_image_index > 0:
+                            previous_image_button = QtWidgets.QPushButton("Previous image")
+                            previous_image_button.clicked.connect(lambda: self.navigate_images(-1))
+
+                            navigation_layout.addWidget(previous_image_button)
+
+                        if self._shown_image_index < len(self._annotated_image_paths) - 1:
+                            next_image_button = QtWidgets.QPushButton("Next image")
+                            next_image_button.clicked.connect(lambda: self.navigate_images(1))
+
+                            navigation_layout.addWidget(next_image_button)
+
+                        panel_layout.addLayout(navigation_layout)
+
+            chosen_folder_path_text = QtWidgets.QLabel(self)
+            chosen_folder_path_text.setText(f"Chosen folder path: {self._chosen_folder_path}")
+
+            panel_layout.addWidget(choose_another_folder_button)
 
         panel_layout.addStretch()
 
@@ -101,76 +119,43 @@ class RendererWindow(QtWidgets.QMainWindow):
 
         self.show()
 
-    def open_image_dialog(self):
-        options = QtWidgets.QFileDialog.Options()
-
+    def folder_dialog(self):
+        # TODO:
         # allow only image files, particularly jpg
-        fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "",
-                                                  "JPG Files (*.jpg)", options=options)
+        dir_name = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory")
 
-        if fileName:
-            print(f'selected file: {fileName}')
+        if dir_name:
+            self._chosen_folder_path = dir_name
 
-            self.active_image_path = fileName
+            self.render_annotations()
 
-            self.chosen_image_pixmap = QPixmap(fileName)
-
-            # set image dimensions
-            self.chosen_image_pixmap = self.chosen_image_pixmap.scaled(500, 500, Qt.KeepAspectRatio)
-
-            self.render_ui()
-
-    def open_metadata_dialog(self):
-        options = QtWidgets.QFileDialog.Options()
-
-        # allow only image files, particularly jpg
-        fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "",
-                                                  "YAML Files (*.yaml)", options=options)
-
-        if fileName:
-            print(f'selected file: {fileName}')
-
-            self.active_metadata_path = fileName
-
-            self.annotation_handler = AnnotationHandler(fileName)
-
-            self.render_ui()
-
-    def reset_files(self):
-        self.active_image_path = None
-        self.active_metadata_path = None
-        self.annotated_image_path = None
-
-        self.chosen_image_pixmap = None
-        self.annotated_image_pixmap = None
-
-        self.annotation_handler = None
+    def render_annotations(self):
+        self._rendering_in_progress = True
+        self._error_text = None
 
         self.render_ui()
 
-    def render_annotations(self):
-        if self.active_metadata_path is None or self.active_image_path is None:
+        try:
+            self._annotation_handler = AnnotationHandler(self._chosen_folder_path)
+        except FileNotFoundError as e:
+            self._error_text = str(e)
+            self.render_ui()
             return
-        
-        self.annotation_handler.parse_metadata()
 
-        img = cv2.imread(self.active_image_path)
+        try:
+            self._annotation_handler.parse_metadata()
+            self._annotated_image_paths = self._annotation_handler.draw_on_all_images(self._chosen_folder_path)
 
-        rendered_img = self.annotation_handler.draw_on_image(img, self.active_image_path)
+            print(self._annotated_image_paths)
 
-        # is there a rendered_images folder? if not, create it
-        if not os.path.isdir(f'{os.getcwd()}/../rendered_images'):
-            os.mkdir(f'{os.getcwd()}/../rendered_images')
+            self._error_text = None
 
-        output_path = f'{os.getcwd()}/../rendered_images/{os.path.basename(self.active_image_path)}'
+            self._shown_image_index = 0
 
-        cv2.imwrite(output_path, rendered_img)
+        except Exception as e:
+            self._error_text = str(e)
 
-        print(f'wrote image to {output_path}')
-
-        self.annotated_image_path = output_path
-
-        self.annotated_image_pixmap = QPixmap(self.annotated_image_path)
+        self._rendering_in_progress = False
 
         self.render_ui()
 
