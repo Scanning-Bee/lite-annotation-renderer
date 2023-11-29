@@ -1,20 +1,11 @@
-import sys
-import datetime
-
-from annotator_ifc import AnnotatorInterface
-import tools
+from gui.guiUtils import create_scaled_pixmap
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import *
 
+import cv2
 
-SCALE = 300
-
-
-def create_scaled_pixmap(pixmap: QPixmap) -> QPixmap:
-    scaled_pixmap = pixmap.scaled(SCALE, SCALE, Qt.KeepAspectRatio, Qt.FastTransformation)
-
-    return scaled_pixmap
+from annotation_handler import AnnotationHandler
 
 
 class RendererWindow(QtWidgets.QMainWindow):
@@ -22,19 +13,18 @@ class RendererWindow(QtWidgets.QMainWindow):
 
     active_metadata_path: str = None
 
-    annotated_image_path: str = None
-
     chosen_image_pixmap: QPixmap = None
 
     annotated_image_pixmap: QPixmap = None
 
-    annotator_ifc: AnnotatorInterface = None
+    annotated_image_path: str = None
+
+    annotation_handler: AnnotationHandler = None
 
     def __init__(self):
         super().__init__()
         self.setGeometry(200, 150, 900, 600)
         self.render_ui()
-        self.annotator_ifc = AnnotatorInterface()
 
     def render_ui(self):
         self.setWindowTitle("Annotated Circle Renderer")
@@ -47,7 +37,7 @@ class RendererWindow(QtWidgets.QMainWindow):
 
         choose_image_button.clicked.connect(self.open_image_dialog)
         choose_metadata_button.clicked.connect(self.open_metadata_dialog)
-        render_image_button.clicked.connect(self.get_annotation)
+        render_image_button.clicked.connect(self.render_annotations)
         reset_files_button.clicked.connect(self.reset_files)
 
         panel_layout = QtWidgets.QVBoxLayout()
@@ -86,7 +76,7 @@ class RendererWindow(QtWidgets.QMainWindow):
             label.setPixmap(scaled_pixmap)
 
             annotated_image_path_text = QtWidgets.QLabel(self)
-            annotated_image_path_text.setText(f"Annotated Image Path: {self.annotated_image_path}")
+            annotated_image_path_text.setText(f"Rendered Image Path: {self.annotated_image_path}")
 
             panel_layout.addWidget(label)
             panel_layout.addWidget(annotated_image_path_text)
@@ -141,6 +131,8 @@ class RendererWindow(QtWidgets.QMainWindow):
 
             self.active_metadata_path = fileName
 
+            self.annotation_handler = AnnotationHandler(fileName)
+
             self.render_ui()
 
     def reset_files(self):
@@ -151,21 +143,26 @@ class RendererWindow(QtWidgets.QMainWindow):
         self.chosen_image_pixmap = None
         self.annotated_image_pixmap = None
 
+        self.annotation_handler = None
+
         self.render_ui()
 
-    def render_image(self):
-        # TODO:
-        return
-
-    def get_annotation(self):
+    def render_annotations(self):
         if self.active_metadata_path is None or self.active_image_path is None:
             return
+        
+        def get_filename(path: str) -> str:
+            return path.split('/')[-1]
 
-        self.annotator_ifc.initialise_annotator(self.active_metadata_path)
+        self.annotation_handler.parse_metadata()
 
-        self.annotator_ifc.annotate_image_from_metadata(self.active_image_path)
+        img = cv2.imread(self.active_image_path)
 
-        self.annotated_image_path = self.annotator_ifc.get_annotated_image_path()
+        rendered_img = self.annotation_handler.draw_on_image(img)
+
+        cv2.imwrite(f'rendered_images/{get_filename(self.active_image_path)}', rendered_img)
+
+        self.annotated_image_path = f'rendered_images/{get_filename(self.active_image_path)}'
 
         self.annotated_image_pixmap = QPixmap(self.annotated_image_path)
 

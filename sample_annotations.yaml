@@ -1,0 +1,66 @@
+annotation_data:
+  annotations:
+  - annotated_image: annotation_image_3_0.jpg
+    annotation: PUPPA
+    center_x: 727
+    center_y: 879
+    orig_image: C:\Users\babur\OneDrive\Desktop\comb_cell_identification\xy_cell_data_babur\2023-09-25-00-00-02-inspection\image_3.jpg
+    radius: 70
+    sec: 1695593004.3916893
+    x_pos: 0.0
+    y_pos: 0.0
+  - annotated_image: annotation_image_3_1.jpg
+    annotation: PUPPA
+    center_x: 562
+    center_y: 894
+    orig_image: C:\Users\babur\OneDrive\Desktop\comb_cell_identification\xy_cell_data_babur\2023-09-25-00-00-02-inspection\image_3.jpg
+    radius: 70
+    sec: 1695593004.3916893
+    x_pos: 0.0
+    y_pos: 0.0
+  - annotated_image: annotation_image_9_0.jpg
+    annotation: PUPPA
+    center_x: 732
+    center_y: 302
+    orig_image: C:\Users\babur\OneDrive\Desktop\comb_cell_identification\xy_cell_data_babur\2023-09-25-00-00-02-inspection\image_9.jpg
+    radius: 70
+    sec: 1695593010.3923223
+    x_pos: 0.0
+    y_pos: 0.0
+  - annotated_image: annotation_image_42_0.jpg
+    annotation: PUPPA
+    center_x: 487
+    center_y: 446
+    orig_image: C:\Users\babur\OneDrive\Desktop\comb_cell_identification\xy_cell_data_babur\2023-09-25-00-00-02-inspection\image_42.jpg
+    radius: 70
+    sec: 1695593619.4719784
+    x_pos: 0.0
+    y_pos: 0.0
+  - annotated_image: annotation_image_42_1.jpg
+    annotation: PUPPA
+    center_x: 1046
+    center_y: 582
+    orig_image: C:\Users\babur\OneDrive\Desktop\comb_cell_identification\xy_cell_data_babur\2023-09-25-00-00-02-inspection\image_42.jpg
+    radius: 70
+    sec: 1695593619.4719784
+    x_pos: 0.0
+    y_pos: 0.0
+  - annotated_image: annotation_image_42_2.jpg
+    annotation: PUPPA
+    center_x: 1286
+    center_y: 142
+    orig_image: C:\Users\babur\OneDrive\Desktop\comb_cell_identification\xy_cell_data_babur\2023-09-25-00-00-02-inspection\image_42.jpg
+    radius: 70
+    sec: 1695593619.4719784
+    x_pos: 0.0
+    y_pos: 0.0
+  - annotated_image: annotation_image_64_0.jpg
+    annotation: PUPPA
+    center_x: 1531
+    center_y: 875
+    orig_image: C:\Users\babur\OneDrive\Desktop\comb_cell_identification\xy_cell_data_babur\2023-09-25-00-00-02-inspection\image_64.jpg
+    radius: 70
+    sec: 1695601741.988091
+    x_pos: 0.0
+    y_pos: 0.0
+  bag_name: 2023-09-25-00-00-02-inspection
