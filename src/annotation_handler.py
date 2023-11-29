@@ -1,6 +1,8 @@
 from typing import List
 import yaml
 
+import os
+
 import numpy as np
 
 from image_annotator.image_annotator.annotation_types import Annotation, CellType
@@ -38,19 +40,24 @@ class AnnotationHandler:
             except yaml.YAMLError as exc:
                 print(exc)
 
+    def filter_annotations_by_filename(self, filename):
+        return [annotation for annotation in self._annotations if os.path.basename(annotation.source_name) == os.path.basename(filename)]
+
     def get_all_annotations(self) -> List[Annotation]:
         return self._annotations
     
     def get_annotations_by_filename(self, chosen_file_path: str) -> List[Annotation]:
-        def get_filename(path: str) -> str:
-            return path.split('/')[-1]
-        
-        chosen_filename = get_filename(chosen_file_path)
+        chosen_filename = os.path.basename(chosen_file_path)
 
-        return [annotation for annotation in self._annotations if get_filename(annotation.source_name) == chosen_filename]
+        return self.filter_annotations_by_filename(chosen_filename)
     
-    def draw_on_image(self, img: np.ndarray):
-        for annotation in self._annotations:
+    def draw_on_image(self, img: np.ndarray, path: str = None):
+        annotations_to_draw = self._annotations
+
+        if path is not None:
+            annotations_to_draw = self.filter_annotations_by_filename(path)
+
+        for annotation in annotations_to_draw:
             img = annotation.draw(img)
             
         return img

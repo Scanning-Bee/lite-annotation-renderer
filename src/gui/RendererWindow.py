@@ -152,24 +152,23 @@ class RendererWindow(QtWidgets.QMainWindow):
         if self.active_metadata_path is None or self.active_image_path is None:
             return
         
-        def get_filename(path: str) -> str:
-            return path.split('/')[-1]
-
         self.annotation_handler.parse_metadata()
 
         img = cv2.imread(self.active_image_path)
 
-        rendered_img = self.annotation_handler.draw_on_image(img)
+        rendered_img = self.annotation_handler.draw_on_image(img, self.active_image_path)
 
         # is there a rendered_images folder? if not, create it
         if not os.path.isdir(f'{os.getcwd()}/../rendered_images'):
             os.mkdir(f'{os.getcwd()}/../rendered_images')
 
-        cv2.imwrite(f'{os.getcwd()}/../rendered_images/{get_filename(self.active_image_path)}', rendered_img)
+        output_path = f'{os.getcwd()}/../rendered_images/{os.path.basename(self.active_image_path)}'
 
-        print(f'wrote image to ./rendered_images/{get_filename(self.active_image_path)}')
+        cv2.imwrite(output_path, rendered_img)
 
-        self.annotated_image_path = f'{os.getcwd()}/../rendered_images/{get_filename(self.active_image_path)}'
+        print(f'wrote image to {output_path}')
+
+        self.annotated_image_path = output_path
 
         self.annotated_image_pixmap = QPixmap(self.annotated_image_path)
 
