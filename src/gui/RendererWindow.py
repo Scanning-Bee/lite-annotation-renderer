@@ -3,6 +3,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import *
 
+import os
 import cv2
 
 from annotation_handler import AnnotationHandler
@@ -160,9 +161,15 @@ class RendererWindow(QtWidgets.QMainWindow):
 
         rendered_img = self.annotation_handler.draw_on_image(img)
 
-        cv2.imwrite(f'rendered_images/{get_filename(self.active_image_path)}', rendered_img)
+        # is there a rendered_images folder? if not, create it
+        if not os.path.isdir(f'{os.getcwd()}/../rendered_images'):
+            os.mkdir(f'{os.getcwd()}/../rendered_images')
 
-        self.annotated_image_path = f'rendered_images/{get_filename(self.active_image_path)}'
+        cv2.imwrite(f'{os.getcwd()}/../rendered_images/{get_filename(self.active_image_path)}', rendered_img)
+
+        print(f'wrote image to ./rendered_images/{get_filename(self.active_image_path)}')
+
+        self.annotated_image_path = f'{os.getcwd()}/../rendered_images/{get_filename(self.active_image_path)}'
 
         self.annotated_image_pixmap = QPixmap(self.annotated_image_path)
 

@@ -3,7 +3,7 @@ import yaml
 
 import numpy as np
 
-from image_annotator.image_annotator.annotation_types import Annotation
+from image_annotator.image_annotator.annotation_types import Annotation, CellType
 
 
 class AnnotationHandler:
@@ -25,7 +25,7 @@ class AnnotationHandler:
 
                 for raw_annotation in raw_annotations:
                     annotation = Annotation(
-                        raw_annotation['annotation'], # the cell type
+                        CellType[raw_annotation['annotation']],
                         raw_annotation['radius'],
                         [raw_annotation['center_x'], raw_annotation['center_y']],
                         raw_annotation['orig_image'].replace('\\', '/'),
@@ -51,7 +51,7 @@ class AnnotationHandler:
     
     def draw_on_image(self, img: np.ndarray):
         for annotation in self._annotations:
-            annotation.draw(img)
+            img = annotation.draw(img)
             
         return img
 
