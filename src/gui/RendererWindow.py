@@ -5,7 +5,7 @@ from PyQt5.QtGui import *
 
 import os
 
-from annotation_handler import AnnotationHandler
+from handlers.annotation_handler import AnnotationHandler
 
 
 class RendererWindow(QtWidgets.QMainWindow):
