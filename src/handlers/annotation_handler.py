@@ -11,6 +11,8 @@ from image_annotator.image_annotator.utils import to_annotation_dictionary, prin
 
 
 class AnnotationHandler:
+    _annotations_dir_path: str = None
+
     _annotations_path: str = None
 
     _annotations_dict: dict = None
@@ -19,6 +21,7 @@ class AnnotationHandler:
         supposed_annotations_path = os.path.join(parent_directory, 'annotations', 'annotations.yaml')
         
         if os.path.exists(supposed_annotations_path):
+            self._annotations_dir_path = os.path.join(parent_directory)
             self._annotations_path = supposed_annotations_path
 
         else:
@@ -42,21 +45,24 @@ class AnnotationHandler:
             
         return img
     
-    def draw_on_all_images(self, parent_directory: str):
+    def draw_on_all_images(self):
+        output_dir = self.get_output_dir()
+
         try:
+            # try: os.system(f'rm -rf {output_dir}')
+            # except: print('me fail')
+
+            os.makedirs(output_dir, exist_ok=True)
+
             output_paths = []
 
             for img_name in self._annotations_dict.keys():
-                img = cv2.imread(os.path.join(parent_directory, img_name))
+                img = cv2.imread(os.path.join(self._annotations_dir_path, img_name))
                 
                 img = self.draw_on_image(img, self._annotations_dict[img_name])
 
-                parent_directory_basename = os.path.basename(parent_directory)
+                output_path = os.path.join(output_dir, img_name)
 
-                output_path = os.path.join(parent_directory, '..', f'rendered_images_for_{parent_directory_basename}', img_name)
-
-                os.makedirs(os.path.dirname(output_path), exist_ok=True)
-                
                 cv2.imwrite(output_path, img)
 
                 output_paths.append(output_path)
@@ -69,7 +75,42 @@ class AnnotationHandler:
     def get_all_annotations(self):
         return self._annotations_dict
 
-    
+    def get_annotations_by_filename(self, filename: str):
+        return self._annotations_dict[filename]
+
+    def save_new_annotation(self, annotation: Annotation):
+        self._annotations_dict[annotation.source_name].append(annotation)
+
+        new_img = self.draw_on_image(
+            cv2.imread(os.path.join(self._annotations_dir_path, annotation.source_name)),
+            self._annotations_dict[annotation.source_name]
+        )
+
+        output_path = os.path.join(self.get_output_dir(), annotation.source_name)
+
+        # os.system(f'rm -f {output_path}')
+
+        cv2.imwrite(output_path, new_img)
+
+    def modify_annotation(self, annotation: Annotation, modifications: dict):
+        for key in modifications.keys():
+            setattr(annotation, key, modifications[key])
+
+        new_img = self.draw_on_image(
+            cv2.imread(os.path.join(self._annotations_dir_path, annotation.source_name)),
+            self._annotations_dict[annotation.source_name]
+        )
+
+        output_path = os.path.join(self.get_output_dir(), annotation.source_name)
+
+        # os.system(f'rm -f {output_path}')
+
+        cv2.imwrite(output_path, new_img)
+
+    def get_output_dir(self):
+        return os.path.join(self._annotations_dir_path, '..', f'rendered_images_for_{os.path.basename(self._annotations_dir_path)}')
+
+
 if (__name__ == '__main__'):
     ah = AnnotationHandler('../sample_annotations.yaml')
     

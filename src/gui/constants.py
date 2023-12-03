@@ -1,1 +1,3 @@
 SCALE = 800
+
+PROPORTION = 16 / 9
