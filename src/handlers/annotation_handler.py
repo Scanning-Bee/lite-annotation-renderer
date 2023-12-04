@@ -6,8 +6,8 @@ import cv2
 
 import numpy as np
 
-from image_annotator.image_annotator.annotation_types import Annotation, CellType
-from image_annotator.image_annotator.utils import to_annotation_dictionary, print_annotation_dictionary
+from image_annotator.image_annotator.annotation_types import Annotation
+from image_annotator.image_annotator.utils import to_annotation_dictionary
 
 
 class AnnotationHandler:
@@ -93,8 +93,35 @@ class AnnotationHandler:
         cv2.imwrite(output_path, new_img)
 
     def modify_annotation(self, annotation: Annotation, modifications: dict):
+        annotation_index = self._annotations_dict[annotation.source_name].index(annotation)
+
+        new_annotation = Annotation(
+            source_name=annotation.source_name,
+            center=annotation.center,
+            radius=annotation.radius,
+            cell_type=annotation.cell_type,
+            timestamp=annotation.timestamp,
+            poses=annotation.poses
+        )
+
         for key in modifications.keys():
-            setattr(annotation, key, modifications[key])
+            setattr(new_annotation, key, modifications[key])
+
+        self._annotations_dict[annotation.source_name][annotation_index] = new_annotation
+
+        new_img = self.draw_on_image(
+            cv2.imread(os.path.join(self._annotations_dir_path, annotation.source_name)),
+            self._annotations_dict[annotation.source_name]
+        )
+
+        output_path = os.path.join(self.get_output_dir(), annotation.source_name)
+
+        # os.system(f'rm -f {output_path}')
+
+        cv2.imwrite(output_path, new_img)
+
+    def delete_annotation(self, annotation: Annotation):
+        self._annotations_dict[annotation.source_name].remove(annotation)
 
         new_img = self.draw_on_image(
             cv2.imread(os.path.join(self._annotations_dir_path, annotation.source_name)),

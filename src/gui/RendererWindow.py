@@ -1,5 +1,6 @@
 import os
 
+from gui.AnnotationEditor import AnnotationEditor
 from gui.constants import SCALE, PROPORTION
 from gui.utils import create_scaled_pixmap
 from PyQt5 import QtWidgets
@@ -27,9 +28,11 @@ class RendererWindow(QtWidgets.QMainWindow):
 
     _click_handler: ClickHandler = ClickHandler()
 
+    _annotation_editor: AnnotationEditor = None
+
     def __init__(self):
         super().__init__()
-        self.setGeometry(200, 150, 900, 600)
+        self.setGeometry(100, 150, 1260, 600)
         self.render_ui()
 
     def navigate_images(self, direction: int):
@@ -37,6 +40,8 @@ class RendererWindow(QtWidgets.QMainWindow):
             return
 
         self._shown_image_index += direction
+
+        self._chosen_annotation_index = -1
 
         self.render_ui()
 
@@ -50,6 +55,7 @@ class RendererWindow(QtWidgets.QMainWindow):
         choose_another_folder_button.clicked.connect(self.folder_dialog)
 
         panel_layout = QtWidgets.QVBoxLayout()
+
         panel_layout.addStretch()
 
         if self._chosen_folder_path is None:
@@ -95,19 +101,32 @@ class RendererWindow(QtWidgets.QMainWindow):
 
                         navigation_layout = QtWidgets.QHBoxLayout()
 
-                        if self._shown_image_index > 0:
-                            previous_image_button = QtWidgets.QPushButton("Previous image")
-                            previous_image_button.clicked.connect(lambda: self.navigate_images(-1))
+                        previous_image_button = QtWidgets.QPushButton("Previous image")
+                        previous_image_button.clicked.connect(lambda: self.navigate_images(-1))
+                        previous_image_button.setDisabled(self._shown_image_index == 0)
 
-                            navigation_layout.addWidget(previous_image_button)
+                        next_image_button = QtWidgets.QPushButton("Next image")
+                        next_image_button.clicked.connect(lambda: self.navigate_images(1))
+                        next_image_button.setDisabled(self._shown_image_index == len(self._annotated_image_paths) - 1)
 
-                        if self._shown_image_index < len(self._annotated_image_paths) - 1:
-                            next_image_button = QtWidgets.QPushButton("Next image")
-                            next_image_button.clicked.connect(lambda: self.navigate_images(1))
-
-                            navigation_layout.addWidget(next_image_button)
+                        navigation_layout.addWidget(previous_image_button)
+                        navigation_layout.addWidget(next_image_button)
 
                         panel_layout.addLayout(navigation_layout)
+
+                        if self._chosen_annotation_index != -1:
+                            def delete_annotation(annotation: Annotation):
+                                self._annotation_handler.delete_annotation(annotation)
+                                self._chosen_annotation_index = - 1
+
+                            self._annotation_editor = AnnotationEditor(
+                                self._annotation_handler.modify_annotation,
+                                delete_annotation,
+                                self.render_ui,
+                                self.get_chosen_annotation()
+                            )
+                        else:
+                            self._annotation_editor = None
 
             chosen_folder_path_text = QtWidgets.QLabel(self)
             chosen_folder_path_text.setText(f"Chosen folder path: {self._chosen_folder_path}")
@@ -119,6 +138,14 @@ class RendererWindow(QtWidgets.QMainWindow):
         final_layout = QtWidgets.QHBoxLayout()
         final_layout.addStretch()
         final_layout.addLayout(panel_layout)
+
+        if self._annotation_editor is not None:
+            editor_layout = QtWidgets.QVBoxLayout()
+            editor_layout.addWidget(self._annotation_editor.get_annotation_editor())
+            editor_layout.addStretch()
+
+            final_layout.addLayout(editor_layout)
+
         final_layout.addStretch()
 
         central = QtWidgets.QWidget(self)
@@ -140,6 +167,12 @@ class RendererWindow(QtWidgets.QMainWindow):
     
     def get_annotations_of_active_image(self):
         return self._annotation_handler.get_annotations_by_filename(self.get_active_image_name())
+
+    def get_chosen_annotation(self):
+        if self._chosen_annotation_index == -1:
+            return None
+
+        return self.get_annotations_of_active_image()[self._chosen_annotation_index]
 
     def infer_annotation_from_click(self, click_event: QMouseEvent):
         active_image_annotations = self.get_annotations_of_active_image()
