@@ -93,21 +93,27 @@ class AnnotationHandler:
         cv2.imwrite(output_path, new_img)
 
     def modify_annotation(self, annotation: Annotation, modifications: dict):
+        """
+        the logic is really stupid, but that is the only way i could get it to work so..
+        """
+
         annotation_index = self._annotations_dict[annotation.source_name].index(annotation)
 
-        new_annotation = Annotation(
-            source_name=annotation.source_name,
-            center=annotation.center,
-            radius=annotation.radius,
-            cell_type=annotation.cell_type,
-            timestamp=annotation.timestamp,
-            poses=annotation.poses
-        )
+        if 'cell_type' in modifications.keys():
+            new_annotation = Annotation(
+                source_name=modifications['source_name'] if 'source_name' in modifications.keys() else annotation.source_name,
+                center=modifications['center'] if 'center' in modifications.keys() else annotation.center,
+                radius=modifications['radius'] if 'radius' in modifications.keys() else annotation.radius,
+                cell_type=modifications['cell_type'] if 'cell_type' in modifications.keys() else annotation.cell_type,
+                timestamp=modifications['timestamp'] if 'timestamp' in modifications.keys() else annotation.timestamp,
+                poses=modifications['poses'] if 'poses' in modifications.keys() else annotation.poses,
+            )
 
-        for key in modifications.keys():
-            setattr(new_annotation, key, modifications[key])
+            self._annotations_dict[annotation.source_name][annotation_index] = new_annotation
 
-        self._annotations_dict[annotation.source_name][annotation_index] = new_annotation
+        else:
+            for key in modifications.keys():
+                setattr(self._annotations_dict[annotation.source_name][annotation_index], key, modifications[key])
 
         new_img = self.draw_on_image(
             cv2.imread(os.path.join(self._annotations_dir_path, annotation.source_name)),
