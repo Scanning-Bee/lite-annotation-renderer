@@ -16,7 +16,9 @@ class AnnotationEditor(QtWidgets.QWidget):
 
     _annotation: Annotation = None
 
-    def __init__(self, modify_function, delete_function, render_parent, annotation):
+    _disabled: bool = False
+
+    def __init__(self, modify_function, delete_function, render_parent, annotation, disabled):
         super().__init__()
 
         def modify_and_render_parent(*args):
@@ -31,6 +33,7 @@ class AnnotationEditor(QtWidgets.QWidget):
         self._delete_function = delete_and_render_parent
         self._render_parent = render_parent
         self._annotation = annotation
+        self._disabled = disabled
 
         self.render_ui()
 
@@ -56,6 +59,12 @@ class AnnotationEditor(QtWidgets.QWidget):
             "center": [self._annotation.center[0] + 5, self._annotation.center[1]]
         }))
 
+        if (self._disabled):
+            up.setDisabled(True)
+            down.setDisabled(True)
+            left.setDisabled(True)
+            right.setDisabled(True)
+
         buttons_layout = QtWidgets.QHBoxLayout()
         # Adding buttons to layout
         buttons_layout.addWidget(up)
@@ -69,13 +78,18 @@ class AnnotationEditor(QtWidgets.QWidget):
         dropdown_layout = QtWidgets.QHBoxLayout()
         dropdown_menu = QtWidgets.QComboBox()
         dropdown_menu.addItems([cell_type.name for cell_type in CellType])
-        dropdown_menu.setCurrentIndex(self._annotation.cell_type.value - 1)
 
         confirm_type_button = QtWidgets.QPushButton('Change Type')
 
         confirm_type_button.clicked.connect(lambda: self._modify_function(self._annotation, {
             "cell_type": CellType[dropdown_menu.currentText()]
         }))
+
+        if (self._disabled):
+            dropdown_menu.setDisabled(True)
+            confirm_type_button.setDisabled(True)
+        else:
+            dropdown_menu.setCurrentIndex(self._annotation.cell_type.value - 1)
 
         dropdown_layout.addWidget(dropdown_menu)
         dropdown_layout.addWidget(confirm_type_button)
@@ -87,13 +101,18 @@ class AnnotationEditor(QtWidgets.QWidget):
 
         slider = QtWidgets.QSlider(Qt.Horizontal)
 
-        slider.setValue(self._annotation.radius)
         slider.setRange(1, 160)
 
         confirm_radius_button = QtWidgets.QPushButton('Change Radius')
         confirm_radius_button.clicked.connect(lambda: self._modify_function(self._annotation, {
             "radius": int(slider.value())
         }))
+
+        if (self._disabled):
+            slider.setDisabled(True)
+            confirm_radius_button.setDisabled(True)
+        else:
+            slider.setValue(self._annotation.radius)
 
         slider_layout.addWidget(slider)
         slider_layout.addWidget(confirm_radius_button)
@@ -104,6 +123,9 @@ class AnnotationEditor(QtWidgets.QWidget):
         delete_button = QtWidgets.QPushButton('Delete')
 
         delete_button.clicked.connect(lambda: self._delete_function(self._annotation))
+
+        if (self._disabled):
+            delete_button.setDisabled(True)
 
         this_layout.addWidget(delete_button)
 

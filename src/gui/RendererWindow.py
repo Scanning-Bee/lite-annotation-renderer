@@ -114,19 +114,19 @@ class RendererWindow(QtWidgets.QMainWindow):
 
                         panel_layout.addLayout(navigation_layout)
 
-                        if self._chosen_annotation_index != -1:
-                            def delete_annotation(annotation: Annotation):
-                                self._annotation_handler.delete_annotation(annotation)
-                                self._chosen_annotation_index = - 1
+                        def delete_annotation(annotation: Annotation):
+                            self._annotation_handler.delete_annotation(annotation)
+                            self._chosen_annotation_index = - 1
 
-                            self._annotation_editor = AnnotationEditor(
-                                self._annotation_handler.modify_annotation,
-                                delete_annotation,
-                                self.render_ui,
-                                self.get_chosen_annotation()
-                            )
-                        else:
-                            self._annotation_editor = None
+                        # if the editor is disabled, it is guaranteed that the chosen annotation index is -1
+                        # and none of the methods passed to the editor will be called
+                        self._annotation_editor = AnnotationEditor(
+                            self._annotation_handler.modify_annotation,
+                            delete_annotation,
+                            self.render_ui,
+                            self.get_chosen_annotation(),
+                            disabled=self._chosen_annotation_index == -1
+                        )
 
             chosen_folder_path_text = QtWidgets.QLabel(self)
             chosen_folder_path_text.setText(f"Chosen folder path: {self._chosen_folder_path}")
