@@ -107,6 +107,15 @@ class AnnotationEditor(QtWidgets.QWidget):
 
         this_layout.addWidget(delete_button)
 
+        labels_layout = QtWidgets.QVBoxLayout()
+
+        # TODO: Dummy labels for now. Should be replaced with actual labels
+        labels_layout.addWidget(QtWidgets.QLabel('Label 1'))
+        labels_layout.addWidget(QtWidgets.QLabel('Label 2'))
+        labels_layout.addWidget(QtWidgets.QLabel('Label 3'))
+
+        this_layout.addLayout(labels_layout)
+
         # Set the layout
         self.setLayout(this_layout)
 
