@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 
-from image_annotator.image_annotator.annotation_types import Annotation, CellType
+from defs import Annotation, CellType
 
 
 # not a window, just a widget in the main window (RendererWindow)

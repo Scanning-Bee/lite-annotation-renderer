@@ -6,8 +6,8 @@ import cv2
 
 import numpy as np
 
-from image_annotator.image_annotator.annotation_types import Annotation
-from image_annotator.image_annotator.utils import to_annotation_dictionary
+from defs import Annotation
+from utils import to_annotation_dictionary
 
 
 class AnnotationHandler:

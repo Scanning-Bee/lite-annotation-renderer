@@ -3,7 +3,7 @@
 
 from PyQt5.QtGui import QMouseEvent
 
-from image_annotator.image_annotator.annotation_types import Annotation, CellType
+from defs import Annotation, CellType
 
 DEFAULT_WIDTH = 1920
 DEFAULT_HEIGHT = 1080

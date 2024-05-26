@@ -8,7 +8,7 @@ from PyQt5.QtGui import *
 
 from handlers.annotation_handler import AnnotationHandler
 from handlers.click_handler import ClickHandler
-from image_annotator.image_annotator.annotation_types import Annotation
+from defs import Annotation
 
 
 class RendererWindow(QtWidgets.QMainWindow):
